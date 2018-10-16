@@ -54,6 +54,7 @@ if(MSVC)
     list(APPEND CMAKE_MODULE_PATH ${HDF5_DIR})
   endif()
   find_package(HDF5 COMPONENTS C HL REQUIRED)
+  # HDF5 v1.8.18 and later need namespace hdf5::
   set(HDF5_LIBRARIES hdf5-shared)
   set(HDF5_HL_LIBRARIES hdf5_hl-shared)
 else()
@@ -151,6 +152,7 @@ elseif(APPLE)
 endif()
 
 # ---[ Python
+message(STATUS "*****************python_version=${python_version}*****************")
 if(BUILD_python)
   if(NOT "${python_version}" VERSION_LESS "3.0.0")
     # use python3
@@ -159,26 +161,35 @@ if(BUILD_python)
     find_package(NumPy 1.7.1)
     # Find the matching boost python implementation
     set(version ${PYTHONLIBS_VERSION_STRING})
+    message(STATUS "*****************PYTHONLIBS_VERSION_STRING=${PYTHONLIBS_VERSION_STRING}*****************")
 
     STRING( REGEX REPLACE "[^0-9]" "" boost_py_version ${version} )
-    find_package(Boost 1.46 COMPONENTS "python-py${boost_py_version}")
-    set(Boost_PYTHON_FOUND ${Boost_PYTHON-PY${boost_py_version}_FOUND})
+    # find_package(Boost 1.46 COMPONENTS "python-py${boost_py_version}")
 
-    while(NOT "${version}" STREQUAL "" AND NOT Boost_PYTHON_FOUND)
-      STRING( REGEX REPLACE "([0-9.]+).[0-9]+" "\\1" version ${version} )
+    # 3.x.y -> 3x
+    STRING( REGEX REPLACE "([0-9.]+).[0-9]+" "\\1" version ${version} )
+    STRING( REGEX REPLACE "[^0-9]" "" boost_py_version ${version} )
 
-      STRING( REGEX REPLACE "[^0-9]" "" boost_py_version ${version} )
-      find_package(Boost 1.46 COMPONENTS "python-py${boost_py_version}")
-      set(Boost_PYTHON_FOUND ${Boost_PYTHON-PY${boost_py_version}_FOUND})
+    find_package(Boost 1.46 COMPONENTS "python${boost_py_version}")
+    # set(Boost_PYTHON_FOUND ${Boost_PYTHON-PY${boost_py_version}_FOUND})
+    set(Boost_PYTHON_FOUND ${Boost_PYTHON${boost_py_version}_FOUND})
 
-      STRING( REGEX MATCHALL "([0-9.]+).[0-9]+" has_more_version ${version} )
-      if("${has_more_version}" STREQUAL "")
-        break()
-      endif()
-    endwhile()
-    if(NOT Boost_PYTHON_FOUND)
-      find_package(Boost 1.46 COMPONENTS python)
-    endif()
+    # while(NOT "${version}" STREQUAL "" AND NOT Boost_PYTHON_FOUND)
+      # STRING( REGEX REPLACE "([0-9.]+).[0-9]+" "\\1" version ${version} )
+
+      # STRING( REGEX REPLACE "[^0-9]" "" boost_py_version ${version} )
+      # # find_package(Boost 1.46 COMPONENTS "python-py${boost_py_version}")
+      # find_package(Boost 1.46 COMPONENTS "python${boost_py_version}")
+      # set(Boost_PYTHON_FOUND ${Boost_PYTHON-PY${boost_py_version}_FOUND})
+
+      # STRING( REGEX MATCHALL "([0-9.]+).[0-9]+" has_more_version ${version} )
+      # if("${has_more_version}" STREQUAL "")
+        # break()
+      # endif()
+    # endwhile()
+    # if(NOT Boost_PYTHON_FOUND)
+      # find_package(Boost 1.46 COMPONENTS python)
+    # endif()
   else()
     # disable Python 3 search
     find_package(PythonInterp 2.7)
